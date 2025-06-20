@@ -60,29 +60,33 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             showScanning();
             
-            const token = await getStoredToken();
+            const apiUrl = `http://localhost:8000/api/scan`;
             
-            const response = await new Promise((resolve) => {
-                chrome.runtime.sendMessage({
-                    action: 'scanRepository',
-                    repoUrl: repoUrl,
-                    accessToken: token
-                }, resolve);
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    repository: repoUrl,
+                }),
             });
 
             hideScanning();
 
-            if (response.success) {
-                displayResults(response.data);
-                // Save results
-                chrome.runtime.sendMessage({
-                    action: 'saveResults',
-                    results: response.data
-                });
-                // Switch to results tab
-                switchTab('results');
+            if (response.ok) {
+                const results = await response.json();
+                if (results.success) {
+                    displayResults(results);
+                    chrome.storage.local.set({ lastScanResults: results });
+                    switchTab('results');
+                } else {
+                    showError(results.error || 'The API returned an error.');
+                }
             } else {
-                showError(response.error);
+                const errorText = await response.text();
+                showError(`API request failed with status ${response.status}: ${errorText}`);
             }
         } catch (error) {
             hideScanning();
@@ -111,11 +115,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function displayResults(results) {
         const hasFindings = results.findings && results.findings.length > 0;
-        const highSeverityCount = results.findings.filter(f => f.severity === 'high').length;
         
         let className = 'results success';
         if (hasFindings) {
-            className = highSeverityCount > 0 ? 'results error' : 'results warning';
+            const hasCritical = results.risk_level === 'critical';
+            className = hasCritical ? 'results error' : 'results warning';
         }
 
         scanResults.className = className;
@@ -125,47 +129,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h4 style="margin: 0 0 5px 0;">📊 Scan Summary</h4>
                 <p style="margin: 0; font-size: 11px;">
                     Repository: <strong>${results.repository}</strong><br>
-                    Files scanned: ${results.filesScanned}<br>
-                    PII items found: ${results.findings.length}<br>
-                    High severity: ${highSeverityCount}
+                    Risk Level: <strong style="text-transform: capitalize;">${results.risk_level}</strong><br>
+                    Files scanned: ${results.files_scanned}<br>
+                    Total issues: ${results.total_issues}
                 </p>
             </div>
         `;
 
         if (hasFindings) {
-            const groupedFindings = groupFindingsByType(results.findings);
+            html += '<div style="margin-bottom: 10px;"><strong>🔍 Findings:</strong></div>';
             
-            html += '<div style="margin-bottom: 10px;"><strong>🔍 Findings by Type:</strong></div>';
-            
-            Object.entries(groupedFindings).forEach(([type, items]) => {
-                const typeIcon = getPIITypeIcon(type);
+            results.findings.forEach(fileFinding => {
                 html += `
-                    <div style="margin-bottom: 10px;">
-                        <strong>${typeIcon} ${type.toUpperCase()} (${items.length})</strong>
-                        ${items.slice(0, 3).map(item => `
-                            <div class="finding-item ${item.severity}">
-                                <div style="font-weight: bold; font-size: 11px;">
-                                    📁 ${item.file.split('/').pop()}:${item.line}
-                                </div>
-                                <div style="font-size: 10px; color: #666;">
-                                    ${item.encrypted ? '🔒 Encrypted' : '⚠️ Plain Text'}
-                                </div>
-                                <div style="font-size: 10px; margin-top: 3px;">
-                                    ${item.recommendation}
-                                </div>
-                            </div>
-                        `).join('')}
-                        ${items.length > 3 ? `<div style="font-size: 10px; color: #666;">... and ${items.length - 3} more</div>` : ''}
-                    </div>
+                    <div class="finding-item ${fileFinding.findings[0].risk}">
+                        <div style="font-weight: bold; font-size: 11px;">
+                            �� ${fileFinding.file}
+                        </div>
                 `;
+                fileFinding.findings.forEach(finding => {
+                     html += `<div><strong>${finding.type}</strong> (${finding.risk})</div>`;
+                     finding.matches.forEach(match => {
+                        html += `<div style="font-size: 10px; color: #666; margin-left:10px;">- Line ${match.line_number}: <code>${escapeHtml(match.line_content)}</code></div>`;
+                     });
+                     html += `<div style="font-size: 10px; margin-top: 3px; margin-left:10px;"><em>Suggestion: ${finding.suggestion}</em></div>`;
+                });
+                html += `</div>`;
             });
+
         } else {
             html += '<p>✅ <strong>Great!</strong> No PII detected in the scanned files.</p>';
         }
 
         html += `
             <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 10px; color: #666;">
-                Scan completed: ${new Date(results.scanDate).toLocaleString()}
+                Scan completed: ${new Date().toLocaleString()}
             </div>
         `;
 

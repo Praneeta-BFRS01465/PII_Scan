@@ -13,12 +13,11 @@
   "host_permissions": [
     "https://github.com/*",
     "https://api.github.com/*",
-    "https://raw.githubusercontent.com/*"
+    "https://raw.githubusercontent.com/*",
+    "http://localhost:8000/*"
   ],
   
-  "background": {
-    "service_worker": "background.js"
-  },
+  "background": {},
   
   "content_scripts": [
     {
