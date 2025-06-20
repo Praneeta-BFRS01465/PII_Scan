@@ -122,7 +122,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let html = `
             <div style="margin-bottom: 15px;">
-                <h4 style="margin: 0 0 5px 0;">📊 Scan Summary</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0;">📊 Scan Summary</h4>
+                    <div>
+                        <button id="downloadJson" class="btn-download" title="Download as JSON">📄 JSON</button>
+                        <button id="downloadCsv" class="btn-download" title="Download as CSV">📊 CSV</button>
+                        <button id="downloadPdf" class="btn-download" title="Download as PDF">📋 PDF</button>
+                    </div>
+                </div>
                 <p style="margin: 0; font-size: 11px;">
                     Repository: <strong>${results.repository}</strong><br>
                     Files scanned: ${results.filesScanned}<br>
@@ -170,6 +177,126 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         scanResults.innerHTML = html;
+        
+        // Add event listeners for download buttons
+        const downloadJsonBtn = document.getElementById('downloadJson');
+        const downloadCsvBtn = document.getElementById('downloadCsv');
+        const downloadPdfBtn = document.getElementById('downloadPdf');
+        
+        if (downloadJsonBtn) {
+            downloadJsonBtn.addEventListener('click', () => downloadResults(results, 'json'));
+        }
+        if (downloadCsvBtn) {
+            downloadCsvBtn.addEventListener('click', () => downloadResults(results, 'csv'));
+        }
+        if (downloadPdfBtn) {
+            downloadPdfBtn.addEventListener('click', () => downloadResults(results, 'pdf'));
+        }
+    }
+
+    function downloadResults(results, format) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+        const repoName = results.repository.replace(/[^a-zA-Z0-9]/g, '_');
+        let filename = `PII_Scan_${repoName}_${timestamp}`;
+        let content, mimeType;
+
+        switch (format) {
+            case 'json':
+                content = JSON.stringify(results, null, 2);
+                mimeType = 'application/json';
+                filename += '.json';
+                break;
+                
+            case 'csv':
+                content = convertToCSV(results);
+                mimeType = 'text/csv';
+                filename += '.csv';
+                break;
+                
+            case 'pdf':
+                content = convertToPDFText(results);
+                mimeType = 'text/plain';
+                filename += '_report.txt'; // Simple text format instead of PDF for now
+                break;
+                
+            default:
+                return;
+        }
+
+        // Create download link
+        const blob = new Blob([content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function convertToCSV(results) {
+        const headers = ['Type', 'Value', 'File', 'Line', 'Encrypted', 'Severity', 'Recommendation'];
+        let csv = headers.join(',') + '\n';
+        
+        results.findings.forEach(finding => {
+            const row = [
+                finding.type,
+                `"${finding.value.replace(/"/g, '""')}"`,
+                `"${finding.file.replace(/"/g, '""')}"`,
+                finding.line,
+                finding.encrypted ? 'Yes' : 'No',
+                finding.severity,
+                `"${finding.recommendation.replace(/"/g, '""')}"`
+            ];
+            csv += row.join(',') + '\n';
+        });
+        
+        return csv;
+    }
+
+    function convertToPDFText(results) {
+        const lines = [];
+        lines.push('='.repeat(60));
+        lines.push('GitHub PII Scanner Report');
+        lines.push('='.repeat(60));
+        lines.push('');
+        lines.push(`Repository: ${results.repository}`);
+        lines.push(`Scan Date: ${new Date(results.scanDate).toLocaleString()}`);
+        lines.push(`Files Scanned: ${results.filesScanned}`);
+        lines.push(`PII Items Found: ${results.findings.length}`);
+        lines.push('');
+        
+        if (results.findings.length === 0) {
+            lines.push('✅ No PII detected in the scanned files.');
+        } else {
+            lines.push('FINDINGS:');
+            lines.push('-'.repeat(40));
+            
+            const groupedFindings = groupFindingsByType(results.findings);
+            
+            Object.entries(groupedFindings).forEach(([type, items]) => {
+                lines.push('');
+                lines.push(`${type.toUpperCase()} (${items.length} found):`);
+                lines.push('');
+                
+                items.forEach((item, index) => {
+                    lines.push(`  ${index + 1}. File: ${item.file}:${item.line}`);
+                    lines.push(`     Value: ${item.value}`);
+                    lines.push(`     Encrypted: ${item.encrypted ? 'Yes' : 'No'}`);
+                    lines.push(`     Severity: ${item.severity.toUpperCase()}`);
+                    lines.push(`     Recommendation: ${item.recommendation}`);
+                    lines.push('');
+                });
+            });
+        }
+        
+        lines.push('');
+        lines.push('='.repeat(60));
+        lines.push('Report generated by GitHub PII Scanner Extension');
+        lines.push('='.repeat(60));
+        
+        return lines.join('\n');
     }
 
     function groupFindingsByType(findings) {
