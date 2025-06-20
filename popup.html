@@ -217,27 +217,14 @@
         <div class="section">
             <h3>GitHub Access Token</h3>
             <div class="input-group">
-                <label for="githubToken">Personal Access Token:</label>
+                <label for="githubToken">Personal Access Token (optional):</label>
                 <input type="password" id="githubToken" placeholder="ghp_...">
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button id="saveToken" class="btn btn-secondary" style="flex: 1;">Save Token</button>
-                <button id="testToken" class="btn btn-secondary" style="flex: 1;">Test Token</button>
-            </div>
-            <div id="tokenStatus" style="font-size: 11px; margin-top: 8px; padding: 6px; border-radius: 4px; display: none;"></div>
-            <div style="margin-top: 10px; padding: 10px; background: #f6f8fa; border-radius: 6px; font-size: 11px;">
-                <h4 style="margin: 0 0 6px 0;">🔐 For Private Repositories:</h4>
-                <ol style="margin: 0; padding-left: 16px;">
-                    <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings → Personal Access Tokens</a></li>
-                    <li>Click "Generate new token (classic)"</li>
-                    <li>Select <strong>"repo"</strong> scope for full repository access</li>
-                    <li>Copy the token and paste it above</li>
-                    <li>Click "Test Token" to verify it works</li>
-                </ol>
-                <p style="margin: 8px 0 0 0; color: #d1242f;">
-                    <strong>Note:</strong> Required for private repos. Optional for public repos (but increases rate limits).
-                </p>
-            </div>
+            <button id="saveToken" class="btn btn-secondary">Save Token</button>
+            <p style="font-size: 11px; color: #586069; margin-top: 5px;">
+                Required for private repositories and higher rate limits.
+                <a href="https://github.com/settings/tokens" target="_blank">Generate token</a>
+            </p>
         </div>
 
         <div class="section">

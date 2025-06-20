@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const scanResults = document.getElementById('scanResults');
     const githubTokenInput = document.getElementById('githubToken');
     const saveTokenBtn = document.getElementById('saveToken');
-    const testTokenBtn = document.getElementById('testToken');
-    const tokenStatus = document.getElementById('tokenStatus');
     const saveSettingsBtn = document.getElementById('saveSettings');
 
     // Load saved settings
@@ -20,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
     scanCurrentBtn.addEventListener('click', scanCurrentRepository);
     scanCustomBtn.addEventListener('click', scanCustomRepository);
     saveTokenBtn.addEventListener('click', saveToken);
-    testTokenBtn.addEventListener('click', testToken);
     saveSettingsBtn.addEventListener('click', saveSettings);
 
     async function scanCurrentRepository() {
@@ -108,29 +105,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showError(message) {
         scanResults.className = 'results error';
-        
-        let errorHtml = `<p><strong>Error:</strong> ${escapeHtml(message)}</p>`;
-        
-        // Add helpful instructions for private repo access
-        if (message.includes('private') || message.includes('not found') || message.includes('403') || message.includes('401')) {
-            errorHtml += `
-                <div style="margin-top: 15px; padding: 10px; background: #e7f3ff; border-left: 4px solid #2196F3; border-radius: 4px;">
-                    <h4 style="margin: 0 0 8px 0; color: #1976d2;">🔐 Private Repository Access</h4>
-                    <p style="margin: 0; font-size: 11px;">To scan private repositories:</p>
-                    <ol style="margin: 8px 0 0 16px; font-size: 11px;">
-                        <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings → Personal Access Tokens</a></li>
-                        <li>Generate a new token with <strong>"repo"</strong> permissions</li>
-                        <li>Copy the token and add it in the <strong>Settings</strong> tab</li>
-                        <li>Try scanning again</li>
-                    </ol>
-                    <button onclick="switchTab('settings')" style="margin-top: 8px; padding: 4px 8px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
-                        Go to Settings →
-                    </button>
-                </div>
-            `;
-        }
-        
-        scanResults.innerHTML = errorHtml;
+        scanResults.innerHTML = `<p><strong>Error:</strong> ${escapeHtml(message)}</p>`;
         switchTab('results');
     }
 
@@ -308,23 +283,20 @@ document.addEventListener('DOMContentLoaded', function() {
         div.textContent = text;
         return div.innerHTML;
     }
+});
 
-    // Tab switching functionality
-    function switchTab(tabName) {
-        // Remove active class from all tabs and content
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        
-        // Add active class to selected tab and content
-        document.querySelector(`.tab:nth-child(${getTabIndex(tabName)})`).classList.add('active');
-        document.getElementById(`${tabName}-tab`).classList.add('active');
-    }
+// Tab switching functionality
+function switchTab(tabName) {
+    // Remove active class from all tabs and content
+    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Add active class to selected tab and content
+    document.querySelector(`.tab:nth-child(${getTabIndex(tabName)})`).classList.add('active');
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+}
 
-    function getTabIndex(tabName) {
-        const tabs = { scan: 1, results: 2, settings: 3 };
-        return tabs[tabName] || 1;
-    }
-
-    // Make switchTab globally accessible
-    window.switchTab = switchTab;
-}); 
+function getTabIndex(tabName) {
+    const tabs = { scan: 1, results: 2, settings: 3 };
+    return tabs[tabName] || 1;
+} 

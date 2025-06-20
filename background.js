@@ -33,23 +33,12 @@ class PIIScanner {
         headers['Authorization'] = `token ${accessToken}`;
       }
 
-      // Check repository accessibility first
-      await this.checkRepositoryAccess(repoInfo, headers, accessToken);
-
       // Get repository tree
       const treeUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/git/trees/HEAD?recursive=1`;
       const treeResponse = await fetch(treeUrl, { headers });
       
       if (!treeResponse.ok) {
-        if (treeResponse.status === 404) {
-          throw new Error(`Repository not found or private. ${!accessToken ? 'For private repositories, please add a GitHub Personal Access Token in Settings.' : 'Check if your token has access to this repository.'}`);
-        } else if (treeResponse.status === 403) {
-          throw new Error(`Access forbidden. ${!accessToken ? 'For private repositories, please add a GitHub Personal Access Token in Settings.' : 'Your token may not have the required permissions or API rate limit exceeded.'}`);
-        } else if (treeResponse.status === 401) {
-          throw new Error('Authentication failed. Please check your GitHub Personal Access Token in Settings.');
-        } else {
-          throw new Error(`GitHub API error: ${treeResponse.status} - ${treeResponse.statusText}`);
-        }
+        throw new Error(`GitHub API error: ${treeResponse.status}`);
       }
       
       const treeData = await treeResponse.json();
@@ -90,28 +79,6 @@ class PIIScanner {
       console.error('Scan error:', error);
       throw error;
     }
-  }
-
-  async checkRepositoryAccess(repoInfo, headers, accessToken) {
-    const repoUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}`;
-    const response = await fetch(repoUrl, { headers });
-    
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(`Repository not found or private. ${!accessToken ? 'For private repositories, please add a GitHub Personal Access Token in Settings.' : 'Check if your token has access to this repository.'}`);
-      } else if (response.status === 403) {
-        throw new Error(`Access forbidden. ${!accessToken ? 'For private repositories, please add a GitHub Personal Access Token in Settings.' : 'Your token may not have the required permissions.'}`);
-      } else if (response.status === 401) {
-        throw new Error('Authentication failed. Please check your GitHub Personal Access Token in Settings.');
-      }
-    }
-    
-    const repoData = await response.json();
-    return {
-      isPrivate: repoData.private,
-      hasAccess: true,
-      repoData: repoData
-    };
   }
 
   parseRepoUrl(url) {
