@@ -38,7 +38,26 @@ class PIIScanner {
       const treeResponse = await fetch(treeUrl, { headers });
       
       if (!treeResponse.ok) {
-        throw new Error(`GitHub API error: ${treeResponse.status}`);
+        const errorData = await treeResponse.json().catch(() => ({}));
+        let errorMessage = `GitHub API error: ${treeResponse.status}`;
+        
+        if (treeResponse.status === 403) {
+          if (errorData.message && errorData.message.includes('rate limit')) {
+            errorMessage = 'GitHub API rate limit exceeded. Please wait or add a GitHub Personal Access Token in Settings.';
+          } else if (errorData.message && errorData.message.includes('private')) {
+            errorMessage = 'Repository is private. Please add a GitHub Personal Access Token in Settings with repository access.';
+          } else if (!accessToken) {
+            errorMessage = 'Access denied. This repository may be private or you may have hit the rate limit. Please add a GitHub Personal Access Token in Settings.';
+          } else {
+            errorMessage = 'Access denied. Please check if your GitHub token has the correct permissions for this repository.';
+          }
+        } else if (treeResponse.status === 404) {
+          errorMessage = 'Repository not found. Please check the repository URL and ensure it exists.';
+        } else if (treeResponse.status === 401) {
+          errorMessage = 'Invalid GitHub token. Please check your Personal Access Token in Settings.';
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const treeData = await treeResponse.json();
@@ -114,7 +133,15 @@ class PIIScanner {
       const fileUrl = `https://api.github.com/repos/${repoInfo.owner}/${repoInfo.repo}/contents/${filePath}`;
       const response = await fetch(fileUrl, { headers });
       
-      if (!response.ok) return null;
+      if (!response.ok) {
+        // Log the error but don't fail the entire scan
+        if (response.status === 403) {
+          console.warn(`Access denied for file ${filePath} (403). Skipping...`);
+        } else if (response.status === 404) {
+          console.warn(`File not found ${filePath} (404). Skipping...`);
+        }
+        return null;
+      }
       
       const fileData = await response.json();
       if (fileData.size > 1000000) return null; // Skip files larger than 1MB
@@ -185,6 +212,35 @@ class PIIScanner {
     if (value.length <= 4) return '***';
     return value.substring(0, 2) + '*'.repeat(value.length - 4) + value.substring(value.length - 2);
   }
+
+  // Test GitHub API access
+  async testGitHubAccess(accessToken = null) {
+    try {
+      const headers = {
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'GitHub-PII-Scanner'
+      };
+      
+      if (accessToken) {
+        headers['Authorization'] = `token ${accessToken}`;
+      }
+
+      // Test with a simple API call to check rate limits
+      const response = await fetch('https://api.github.com/rate_limit', { headers });
+      const data = await response.json();
+      
+      return {
+        success: true,
+        rateLimit: data.rate,
+        hasToken: !!accessToken
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
 }
 
 // Message handling
@@ -199,6 +255,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: false, error: error.message });
       });
     return true; // Keep message channel open for async response
+  }
+  
+  if (request.action === 'testGitHubAccess') {
+    const scanner = new PIIScanner();
+    scanner.testGitHubAccess(request.accessToken)
+      .then(results => {
+        sendResponse(results);
+      })
+      .catch(error => {
+        sendResponse({ success: false, error: error.message });
+      });
+    return true;
   }
   
   if (request.action === 'saveResults') {
