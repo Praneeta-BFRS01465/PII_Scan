@@ -17,7 +17,9 @@
     "http://localhost:8000/*"
   ],
   
-  "background": {},
+  "background": {
+    "service_worker": "background.js"
+  },
   
   "content_scripts": [
     {
