@@ -20,6 +20,14 @@ document.addEventListener('DOMContentLoaded', function() {
     saveTokenBtn.addEventListener('click', saveToken);
     saveSettingsBtn.addEventListener('click', saveSettings);
 
+    // Tab switching event listeners
+    document.querySelectorAll('.tab').forEach((tab, index) => {
+        tab.addEventListener('click', () => {
+            const tabNames = ['scan', 'results', 'settings'];
+            switchTab(tabNames[index]);
+        });
+    });
+
     async function scanCurrentRepository() {
         try {
             const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -283,20 +291,23 @@ document.addEventListener('DOMContentLoaded', function() {
         div.textContent = text;
         return div.innerHTML;
     }
-});
 
-// Tab switching functionality
-function switchTab(tabName) {
-    // Remove active class from all tabs and content
-    document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    
-    // Add active class to selected tab and content
-    document.querySelector(`.tab:nth-child(${getTabIndex(tabName)})`).classList.add('active');
-    document.getElementById(`${tabName}-tab`).classList.add('active');
-}
+    // Tab switching functionality
+    function switchTab(tabName) {
+        // Remove active class from all tabs and content
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+        
+        // Add active class to selected tab and content
+        document.querySelector(`.tab:nth-child(${getTabIndex(tabName)})`).classList.add('active');
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
 
-function getTabIndex(tabName) {
-    const tabs = { scan: 1, results: 2, settings: 3 };
-    return tabs[tabName] || 1;
-} 
+    function getTabIndex(tabName) {
+        const tabs = { scan: 1, results: 2, settings: 3 };
+        return tabs[tabName] || 1;
+    }
+
+    // Make switchTab globally accessible for HTML onclick events
+    window.switchTab = switchTab;
+}); 
