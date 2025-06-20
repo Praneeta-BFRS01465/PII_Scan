@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const scanResults = document.getElementById('scanResults');
     const githubTokenInput = document.getElementById('githubToken');
     const saveTokenBtn = document.getElementById('saveToken');
+    const testTokenBtn = document.getElementById('testToken');
+    const tokenStatus = document.getElementById('tokenStatus');
     const saveSettingsBtn = document.getElementById('saveSettings');
 
     // Load saved settings
@@ -18,15 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
     scanCurrentBtn.addEventListener('click', scanCurrentRepository);
     scanCustomBtn.addEventListener('click', scanCustomRepository);
     saveTokenBtn.addEventListener('click', saveToken);
+    testTokenBtn.addEventListener('click', testToken);
     saveSettingsBtn.addEventListener('click', saveSettings);
-
-    // Tab switching event listeners
-    document.querySelectorAll('.tab').forEach((tab, index) => {
-        tab.addEventListener('click', () => {
-            const tabNames = ['scan', 'results', 'settings'];
-            switchTab(tabNames[index]);
-        });
-    });
 
     async function scanCurrentRepository() {
         try {
@@ -113,45 +108,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showError(message) {
         scanResults.className = 'results error';
-        scanResults.innerHTML = `<p><strong>Error:</strong> ${escapeHtml(message)}</p>`;
+        
+        let errorHtml = `<p><strong>Error:</strong> ${escapeHtml(message)}</p>`;
+        
+        // Add helpful instructions for private repo access
+        if (message.includes('private') || message.includes('not found') || message.includes('403') || message.includes('401')) {
+            errorHtml += `
+                <div style="margin-top: 15px; padding: 10px; background: #e7f3ff; border-left: 4px solid #2196F3; border-radius: 4px;">
+                    <h4 style="margin: 0 0 8px 0; color: #1976d2;">🔐 Private Repository Access</h4>
+                    <p style="margin: 0; font-size: 11px;">To scan private repositories:</p>
+                    <ol style="margin: 8px 0 0 16px; font-size: 11px;">
+                        <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings → Personal Access Tokens</a></li>
+                        <li>Generate a new token with <strong>"repo"</strong> permissions</li>
+                        <li>Copy the token and add it in the <strong>Settings</strong> tab</li>
+                        <li>Try scanning again</li>
+                    </ol>
+                    <button onclick="switchTab('settings')" style="margin-top: 8px; padding: 4px 8px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 11px;">
+                        Go to Settings →
+                    </button>
+                </div>
+            `;
+        }
+        
+        scanResults.innerHTML = errorHtml;
         switchTab('results');
     }
 
     function displayResults(results) {
-        console.log('Displaying results:', results, typeof results);
-        
-        // Debug: Check if results is a string instead of object
-        if (typeof results === 'string') {
-            try {
-                results = JSON.parse(results);
-            } catch (e) {
-                console.error('Failed to parse results:', results);
-                // If it's a raw string that looks like pre-formatted data, try to display it nicely
-                scanResults.className = 'results error';
-                scanResults.innerHTML = `
-                    <div style="margin-bottom: 15px;">
-                        <h4 style="margin: 0 0 5px 0;">⚠️ Raw Data Received</h4>
-                        <p>The scan returned raw data instead of formatted results:</p>
-                        <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px; font-family: monospace; font-size: 10px; max-height: 200px; overflow-y: auto;">
-                            ${escapeHtml(results)}
-                        </div>
-                        <p style="margin-top: 10px; font-size: 11px; color: #666;">
-                            This might indicate an issue with the background script or API response.
-                        </p>
-                    </div>
-                `;
-                return;
-            }
-        }
-
-        // Ensure results has the expected structure
-        if (!results || typeof results !== 'object') {
-            showError('Invalid scan results received');
-            return;
-        }
-
         const hasFindings = results.findings && results.findings.length > 0;
-        const highSeverityCount = results.findings ? results.findings.filter(f => f.severity === 'high').length : 0;
+        const highSeverityCount = results.findings.filter(f => f.severity === 'high').length;
         
         let className = 'results success';
         if (hasFindings) {
@@ -164,9 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <div style="margin-bottom: 15px;">
                 <h4 style="margin: 0 0 5px 0;">📊 Scan Summary</h4>
                 <p style="margin: 0; font-size: 11px;">
-                    Repository: <strong>${escapeHtml(results.repository || 'Unknown')}</strong><br>
-                    Files scanned: ${results.filesScanned || 0}<br>
-                    PII items found: ${results.findings ? results.findings.length : 0}<br>
+                    Repository: <strong>${results.repository}</strong><br>
+                    Files scanned: ${results.filesScanned}<br>
+                    PII items found: ${results.findings.length}<br>
                     High severity: ${highSeverityCount}
                 </p>
             </div>
@@ -340,6 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return tabs[tabName] || 1;
     }
 
-    // Make switchTab globally accessible for HTML onclick events
+    // Make switchTab globally accessible
     window.switchTab = switchTab;
 }); 
