@@ -2,7 +2,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const scanCurrentBtn = document.getElementById('scanCurrentRepo');
     const scanCustomBtn = document.getElementById('scanCustomRepo');
-    const testAccessBtn = document.getElementById('testAccess');
     const repoUrlInput = document.getElementById('repoUrl');
     const scanStatus = document.getElementById('scanStatus');
     const statusText = document.getElementById('statusText');
@@ -18,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners
     scanCurrentBtn.addEventListener('click', scanCurrentRepository);
     scanCustomBtn.addEventListener('click', scanCustomRepository);
-    testAccessBtn.addEventListener('click', testGitHubAccess);
     saveTokenBtn.addEventListener('click', saveToken);
     saveSettingsBtn.addEventListener('click', saveSettings);
 
@@ -56,53 +54,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         await performScan(url);
-    }
-
-    async function testGitHubAccess() {
-        try {
-            showScanning();
-            statusText.textContent = 'Testing GitHub API access...';
-            
-            const token = await getStoredToken();
-            
-            const response = await new Promise((resolve) => {
-                chrome.runtime.sendMessage({
-                    action: 'testGitHubAccess',
-                    accessToken: token
-                }, resolve);
-            });
-
-            hideScanning();
-
-            if (response.success) {
-                const { rateLimit, hasToken } = response;
-                let message = `✅ GitHub API Access Test Results:\n\n`;
-                message += `🔑 Token: ${hasToken ? 'Provided' : 'Not provided'}\n`;
-                message += `📊 Rate Limit: ${rateLimit.remaining}/${rateLimit.limit} requests remaining\n`;
-                message += `⏰ Reset: ${new Date(rateLimit.reset * 1000).toLocaleTimeString()}\n\n`;
-                
-                if (rateLimit.remaining < 10) {
-                    message += `⚠️ Low on API requests. Consider adding a token.`;
-                } else if (!hasToken) {
-                    message += `💡 Add a Personal Access Token in Settings for higher limits.`;
-                } else {
-                    message += `✅ API access looks good!`;
-                }
-                
-                displayTestResults(message, 'success');
-            } else {
-                showError('GitHub API test failed: ' + response.error);
-            }
-        } catch (error) {
-            hideScanning();
-            showError('Test failed: ' + error.message);
-        }
-    }
-
-    function displayTestResults(message, type) {
-        scanResults.className = `results ${type}`;
-        scanResults.innerHTML = `<pre style="white-space: pre-wrap; font-family: monospace; font-size: 11px;">${escapeHtml(message)}</pre>`;
-        switchTab('results');
     }
 
     async function performScan(repoUrl) {
