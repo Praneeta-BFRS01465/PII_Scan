@@ -1,0 +1,227 @@
+/* Styles for GitHub PII Scanner Extension */
+
+.pii-scanner-button {
+  background: #f6f8fa !important;
+  border: 1px solid #d1d9e0 !important;
+  color: #24292f !important;
+  font-size: 14px !important;
+  padding: 5px 12px !important;
+  border-radius: 6px !important;
+  transition: background-color 0.2s !important;
+}
+
+.pii-scanner-button:hover {
+  background: #f3f4f6 !important;
+  border-color: #d1d9e0 !important;
+}
+
+.pii-scanner-button:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+.pii-scanner-results {
+  margin: 16px 0 !important;
+  z-index: 1000 !important;
+}
+
+.pii-scan-results {
+  padding: 16px !important;
+  border-radius: 6px !important;
+  border: 1px solid #d1d9e0 !important;
+}
+
+.pii-scan-results h4 {
+  margin: 0 0 8px 0 !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+.pii-scan-results p {
+  margin: 0 0 8px 0 !important;
+  font-size: 14px !important;
+}
+
+.pii-finding-group {
+  margin: 12px 0 !important;
+}
+
+.pii-finding-group summary {
+  cursor: pointer !important;
+  padding: 8px 0 !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid #e1e4e8 !important;
+}
+
+.pii-finding-group summary:hover {
+  background-color: #f6f8fa !important;
+}
+
+.flash {
+  padding: 16px !important;
+  margin-bottom: 16px !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+}
+
+.flash-success {
+  color: #0f5132 !important;
+  background-color: #d1e7dd !important;
+  border-color: #badbcc !important;
+}
+
+.flash-warn {
+  color: #664d03 !important;
+  background-color: #fff3cd !important;
+  border-color: #ffecb5 !important;
+}
+
+.flash-error {
+  color: #842029 !important;
+  background-color: #f8d7da !important;
+  border-color: #f5c2c7 !important;
+}
+
+.Label {
+  display: inline-block !important;
+  padding: 0 7px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 18px !important;
+  border-radius: 2em !important;
+  border: 1px solid transparent !important;
+}
+
+.Label--danger {
+  color: #d1242f !important;
+  background-color: #ffebe9 !important;
+  border-color: #fd2d3a !important;
+}
+
+.Label--warning {
+  color: #9a6700 !important;
+  background-color: #fff8c5 !important;
+  border-color: #d4ac0d !important;
+}
+
+.Label--success {
+  color: #1a7f37 !important;
+  background-color: #dafbe1 !important;
+  border-color: #1f883d !important;
+}
+
+.bg-gray-light {
+  background-color: #f6f8fa !important;
+}
+
+.border {
+  border: 1px solid #d1d9e0 !important;
+}
+
+.rounded {
+  border-radius: 6px !important;
+}
+
+.p-2 {
+  padding: 8px !important;
+}
+
+.mb-2 {
+  margin-bottom: 8px !important;
+}
+
+.mt-1 {
+  margin-top: 4px !important;
+}
+
+.mt-2 {
+  margin-top: 8px !important;
+}
+
+.mt-3 {
+  margin-top: 16px !important;
+}
+
+.ml-3 {
+  margin-left: 16px !important;
+}
+
+.d-flex {
+  display: flex !important;
+}
+
+.justify-content-between {
+  justify-content: space-between !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.text-small {
+  font-size: 12px !important;
+}
+
+.text-gray {
+  color: #656d76 !important;
+}
+
+.text-danger {
+  color: #d1242f !important;
+}
+
+.text-warning {
+  color: #9a6700 !important;
+}
+
+.btn-link {
+  background: none !important;
+  border: none !important;
+  color: #0969da !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+}
+
+.btn-link:hover {
+  text-decoration: underline !important;
+}
+
+/* Animation for scanning */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner-border {
+  display: inline-block !important;
+  width: 1rem !important;
+  height: 1rem !important;
+  vertical-align: text-bottom !important;
+  border: 0.125em solid currentColor !important;
+  border-right-color: transparent !important;
+  border-radius: 50% !important;
+  animation: spin 0.75s linear infinite !important;
+}
+
+.spinner-border-sm {
+  width: 0.875rem !important;
+  height: 0.875rem !important;
+  border-width: 0.125em !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .pii-scanner-button {
+    font-size: 12px !important;
+    padding: 4px 8px !important;
+  }
+  
+  .pii-scan-results {
+    padding: 12px !important;
+  }
+  
+  .pii-scan-results h4 {
+    font-size: 14px !important;
+  }
+} 

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Extension Icons</title>
+</head>
+<body>
+    <h2>Extension Icon Generator</h2>
+    <canvas id="canvas16" width="16" height="16" style="border: 1px solid #ccc; margin: 5px;"></canvas>
+    <canvas id="canvas48" width="48" height="48" style="border: 1px solid #ccc; margin: 5px;"></canvas>
+    <canvas id="canvas128" width="128" height="128" style="border: 1px solid #ccc; margin: 5px;"></canvas>
+    
+    <div>
+        <button onclick="downloadIcon('canvas16', 'icon16.png')">Download 16px</button>
+        <button onclick="downloadIcon('canvas48', 'icon48.png')">Download 48px</button>
+        <button onclick="downloadIcon('canvas128', 'icon128.png')">Download 128px</button>
+    </div>
+
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Blue background
+            ctx.fillStyle = '#1976d2';
+            ctx.fillRect(0, 0, size, size);
+            
+            // White magnifying glass
+            ctx.strokeStyle = '#ffffff';
+            ctx.fillStyle = '#ffffff';
+            ctx.lineWidth = size * 0.08;
+            
+            const centerX = size * 0.4;
+            const centerY = size * 0.4;
+            const radius = size * 0.2;
+            
+            // Circle part of magnifying glass
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Handle part
+            ctx.beginPath();
+            ctx.moveTo(centerX + radius * 0.7, centerY + radius * 0.7);
+            ctx.lineTo(centerX + radius * 1.5, centerY + radius * 1.5);
+            ctx.stroke();
+            
+            // PII text
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `${size * 0.12}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('PII', size * 0.5, size * 0.85);
+        }
+        
+        function downloadIcon(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Create all icons
+        createIcon('canvas16', 16);
+        createIcon('canvas48', 48);
+        createIcon('canvas128', 128);
+    </script>
+</body>
+</html> 

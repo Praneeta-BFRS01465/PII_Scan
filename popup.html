@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 400px;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #24292e;
+        }
+        
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 12px;
+            color: #586069;
+        }
+        
+        .section {
+            margin-bottom: 15px;
+        }
+        
+        .section h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #24292e;
+        }
+        
+        .input-group {
+            margin-bottom: 10px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            color: #586069;
+            margin-bottom: 5px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5da;
+            border-radius: 6px;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .btn:hover {
+            background-color: #218838;
+        }
+        
+        .btn:disabled {
+            background-color: #94d3a2;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .results {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+        
+        .results.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .results.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .results.warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .finding-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-left: 3px solid #ffc107;
+            border-radius: 3px;
+        }
+        
+        .finding-item.high {
+            border-left-color: #dc3545;
+        }
+        
+        .finding-item.low {
+            border-left-color: #28a745;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .status.scanning {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 8px;
+            background: #f1f3f4;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .tab.active {
+            background: #1976d2;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 GitHub PII Scanner</h1>
+        <p>Detect and analyze PII in repositories</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('scan')">Scan</button>
+        <button class="tab" onclick="switchTab('results')">Results</button>
+        <button class="tab" onclick="switchTab('settings')">Settings</button>
+    </div>
+
+    <!-- Scan Tab -->
+    <div id="scan-tab" class="tab-content active">
+        <div class="section">
+            <h3>Quick Scan</h3>
+            <button id="scanCurrentRepo" class="btn">Scan Current Repository</button>
+        </div>
+
+        <div class="section">
+            <h3>Custom Scan</h3>
+            <div class="input-group">
+                <label for="repoUrl">Repository URL:</label>
+                <input type="text" id="repoUrl" placeholder="https://github.com/username/repo">
+            </div>
+            <button id="scanCustomRepo" class="btn">Scan Repository</button>
+        </div>
+
+        <div id="scanStatus" class="status hidden">
+            <div id="statusText">Initializing scan...</div>
+        </div>
+    </div>
+
+    <!-- Results Tab -->
+    <div id="results-tab" class="tab-content">
+        <div id="scanResults" class="results">
+            <p>No scan results available. Run a scan first.</p>
+        </div>
+    </div>
+
+    <!-- Settings Tab -->
+    <div id="settings-tab" class="tab-content">
+        <div class="section">
+            <h3>GitHub Access Token</h3>
+            <div class="input-group">
+                <label for="githubToken">Personal Access Token (optional):</label>
+                <input type="password" id="githubToken" placeholder="ghp_...">
+            </div>
+            <button id="saveToken" class="btn btn-secondary">Save Token</button>
+            <p style="font-size: 11px; color: #586069; margin-top: 5px;">
+                Required for private repositories and higher rate limits.
+                <a href="https://github.com/settings/tokens" target="_blank">Generate token</a>
+            </p>
+        </div>
+
+        <div class="section">
+            <h3>Scan Options</h3>
+            <div class="input-group">
+                <label>
+                    <input type="checkbox" id="includeTests" checked> Include test files
+                </label>
+            </div>
+            <div class="input-group">
+                <label>
+                    <input type="checkbox" id="includeDocs" checked> Include documentation
+                </label>
+            </div>
+            <button id="saveSettings" class="btn btn-secondary">Save Settings</button>
+        </div>
+
+        <div class="section">
+            <h3>About</h3>
+            <p style="font-size: 11px; color: #586069;">
+                Version 1.0.0<br>
+                Scans for emails, phone numbers, SSNs, API keys, and more.<br>
+                Checks encryption status and provides recommendations.
+            </p>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html> 
