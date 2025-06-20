@@ -118,8 +118,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayResults(results) {
+        console.log('Displaying results:', results, typeof results);
+        
+        // Debug: Check if results is a string instead of object
+        if (typeof results === 'string') {
+            try {
+                results = JSON.parse(results);
+            } catch (e) {
+                console.error('Failed to parse results:', results);
+                // If it's a raw string that looks like pre-formatted data, try to display it nicely
+                scanResults.className = 'results error';
+                scanResults.innerHTML = `
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 5px 0;">⚠️ Raw Data Received</h4>
+                        <p>The scan returned raw data instead of formatted results:</p>
+                        <div style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin-top: 10px; font-family: monospace; font-size: 10px; max-height: 200px; overflow-y: auto;">
+                            ${escapeHtml(results)}
+                        </div>
+                        <p style="margin-top: 10px; font-size: 11px; color: #666;">
+                            This might indicate an issue with the background script or API response.
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+        }
+
+        // Ensure results has the expected structure
+        if (!results || typeof results !== 'object') {
+            showError('Invalid scan results received');
+            return;
+        }
+
         const hasFindings = results.findings && results.findings.length > 0;
-        const highSeverityCount = results.findings.filter(f => f.severity === 'high').length;
+        const highSeverityCount = results.findings ? results.findings.filter(f => f.severity === 'high').length : 0;
         
         let className = 'results success';
         if (hasFindings) {
@@ -132,9 +164,9 @@ document.addEventListener('DOMContentLoaded', function() {
             <div style="margin-bottom: 15px;">
                 <h4 style="margin: 0 0 5px 0;">📊 Scan Summary</h4>
                 <p style="margin: 0; font-size: 11px;">
-                    Repository: <strong>${results.repository}</strong><br>
-                    Files scanned: ${results.filesScanned}<br>
-                    PII items found: ${results.findings.length}<br>
+                    Repository: <strong>${escapeHtml(results.repository || 'Unknown')}</strong><br>
+                    Files scanned: ${results.filesScanned || 0}<br>
+                    PII items found: ${results.findings ? results.findings.length : 0}<br>
                     High severity: ${highSeverityCount}
                 </p>
             </div>
