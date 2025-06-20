@@ -140,20 +140,28 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div style="margin-bottom: 10px;"><strong>🔍 Findings:</strong></div>';
             
             results.findings.forEach(fileFinding => {
-                html += `
-                    <div class="finding-item ${fileFinding.findings[0].risk}">
-                        <div style="font-weight: bold; font-size: 11px;">
-                            �� ${fileFinding.file}
-                        </div>
-                `;
                 fileFinding.findings.forEach(finding => {
-                     html += `<div><strong>${finding.type}</strong> (${finding.risk})</div>`;
-                     finding.matches.forEach(match => {
-                        html += `<div style="font-size: 10px; color: #666; margin-left:10px;">- Line ${match.line_number}: <code>${escapeHtml(match.line_content)}</code></div>`;
-                     });
-                     html += `<div style="font-size: 10px; margin-top: 3px; margin-left:10px;"><em>Suggestion: ${finding.suggestion}</em></div>`;
+                    html += `
+                        <div class="finding-item ${finding.risk}">
+                            <div style="font-weight: bold; font-size: 11px;">
+                                📁 ${fileFinding.file}
+                            </div>
+                    `;
+                    finding.matches.forEach(match => {
+                       html += `
+                           <div class="finding-detail">
+                               <div><strong>${finding.type}</strong> (${finding.risk})</div>
+                               <div class="finding-meta">
+                                   <span class="badge ${match.visibility}">${match.visibility}</span>
+                                   <span class="badge ${match.context_type}">${match.context_type}</span>
+                               </div>
+                               <div class="finding-line">Line ${match.line_number}: <code>${escapeHtml(match.line_content)}</code></div>
+                               <div class="finding-suggestion"><em>Suggestion: ${finding.suggestion}</em></div>
+                           </div>
+                       `;
+                    });
+                    html += `</div>`;
                 });
-                html += `</div>`;
             });
 
         } else {
